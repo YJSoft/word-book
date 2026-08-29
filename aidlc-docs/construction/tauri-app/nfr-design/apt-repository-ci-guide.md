@@ -61,17 +61,25 @@ jobs:
 
 ## 사용자 설치 방법 (안내용, 실제 URL은 저장소명에 맞게 치환)
 
+이 APT 저장소는 **flat repository** 구조입니다(`dists/<suite>/` 하위 디렉토리 없이 `Release`/`Packages`가 채널 디렉토리에 바로 위치). sources.list 항목은 반드시 `./`로 끝나는 flat 형식이어야 합니다. **일반(non-flat) 형식(`URL SUITE COMPONENT`)을 사용하면 apt가 `URL/dists/SUITE/Release`를 찾으러 가서 404가 발생합니다.**
+
 ```bash
 # 공개키 등록
-curl -fsSL https://<owner>.github.io/<repo-name>/apt/wordbook-apt-key.asc \
+curl -fsSL https://yjsoft.github.io/word-book/apt/wordbook-apt-key.asc \
   | sudo gpg --dearmor -o /usr/share/keyrings/wordbook.gpg
 
-# nightly 채널 추가 (또는 main으로 교체하여 안정 버전 사용)
-echo "deb [signed-by=/usr/share/keyrings/wordbook.gpg] https://<owner>.github.io/<repo-name>/apt/nightly nightly main" \
+# nightly 채널 추가 (flat repo 형식, 끝의 './' 필수) — 또는 main으로 교체하여 안정 버전 사용
+echo "deb [signed-by=/usr/share/keyrings/wordbook.gpg] https://yjsoft.github.io/word-book/apt/nightly ./" \
   | sudo tee /etc/apt/sources.list.d/wordbook.list
 
 sudo apt update
 sudo apt install word-book
+```
+
+**이미 잘못된 형식(`nightly main`)으로 등록했다면**, 파일을 삭제 후 위 명령으로 다시 등록하세요:
+```bash
+sudo rm /etc/apt/sources.list.d/wordbook.list
+# 위 echo 명령 재실행
 ```
 
 ## 이 세션에서의 검증 범위
@@ -85,3 +93,27 @@ sudo apt install word-book
 2. 이 저장소를 실제 GitHub에 push
 3. `main` 브랜치에 push하여 `build.yml`이 트리거되는지, `repo` 브랜치의 `apt/nightly/`에 파일이 게시되는지 확인
 4. GitHub Pages 설정(`repo` 브랜치를 소스로) 후 실제 URL로 APT 저장소 접근 가능한지 확인
+
+## 트러블슈팅 (실제 사용 중 발견된 이슈)
+
+### `git push` 인증 실패 (`Authentication failed`)
+- **원인**: Publish 스텝의 `env`에 `GITHUB_TOKEN`이 전달되지 않았거나, job에 `contents: write` 권한이 없음
+- **해결**: `build.yml`/`release.yml`에 이미 반영됨 (2026-08-29 수정). 저장소 Settings → Actions → General → **Workflow permissions**가 "Read and write permissions"인지도 확인 (repo/org 정책이 파일 내 `permissions:` 선언보다 우선할 수 있음)
+
+### `apt update` 시 `404 Not Found` 또는 `does not have a Release file`
+- **실제 근본 원인 (확인됨)**: sources.list 항목이 `deb [...] URL SUITE COMPONENT` (예: `nightly main`) 형식으로 되어 있으면, apt는 이를 **표준(non-flat) 저장소**로 인식하여 `URL/dists/SUITE/Release`를 요청합니다. 하지만 이 저장소는 `dists/` 하위 구조가 없는 **flat repository**(Release/Packages가 채널 디렉토리에 바로 위치)이므로 해당 경로는 존재하지 않아 항상 404가 발생합니다. **캐시나 배포 지연 문제가 아니라 URL 형식 자체의 오류였습니다.**
+- **해결**: sources.list 항목을 flat repo 형식으로 수정 (끝이 `./`로 끝나야 함):
+  ```
+  deb [signed-by=/usr/share/keyrings/wordbook.gpg] https://<owner>.github.io/<repo>/apt/nightly ./
+  ```
+  (2026-08-29 안내 문서 및 스크립트의 안내 출력 모두 이 형식으로 수정함)
+- **추가로 수정된 관련 버그**: `dpkg-scanpackages`를 채널 디렉토리 상위(`apt/`)에서 실행하고 있어 `Packages`의 `Filename` 필드가 `nightly/파일명`처럼 채널명이 중복 포함되어 있었습니다(flat repo에서는 `./파일명`이어야 함). 채널 디렉토리 자체에서 스캔하도록 스크립트를 수정하여 해결했습니다.
+- **확인 방법**: `curl -s -o /dev/null -w "%{http_code}\n" https://<owner>.github.io/<repo>/apt/<channel>/Release` 로 실제 상태 코드를 직접 확인 (파일 자체는 200이었지만, apt가 잘못된 경로인 `dists/<channel>/Release`를 요청했던 것이 문제였음)
+
+### `apt update` 로그에 `무시:` (Ignored) 표시
+- **원인**: `InRelease`(서명된 통합 파일)를 가져왔지만 GPG 서명 검증에 실패해 무시되고, 서명 없는 `Release`로 폴백을 시도한 것일 수 있습니다.
+- **해결**: 공개키가 로컬에 올바르게 등록되었는지 확인:
+  ```bash
+  curl -fsSL https://<owner>.github.io/<repo>/apt/wordbook-apt-key.asc | sudo gpg --dearmor -o /usr/share/keyrings/wordbook.gpg
+  ```
+  그리고 `sources.list.d`의 항목이 `signed-by=/usr/share/keyrings/wordbook.gpg`를 정확히 참조하는지 확인하세요.

@@ -49,15 +49,26 @@ fi
 
 echo "==> 3. 채널 디렉토리에 새 .deb 파일 복사 (기존 채널 파일은 유지, 신규/갱신만 추가)"
 mkdir -p "$CHANNEL_DIR"
-cp "${DEB_FILES[@]}" "$CHANNEL_DIR/"
+# .deb 파일명의 공백을 하이픈으로 정규화한다 (APT 저장소에서 공백 포함 파일명은
+# URL 인코딩/클라이언트 호환성 문제를 일으킬 수 있음. 예: "Word Book_0.1.0_amd64.deb" -> "Word-Book_0.1.0_amd64.deb")
+for src in "${DEB_FILES[@]}"; do
+  base="$(basename "$src")"
+  normalized="${base// /-}"
+  cp "$src" "${CHANNEL_DIR}/${normalized}"
+done
 
 echo "==> 4. Packages 인덱스 생성 (dpkg-scanpackages)"
-cd "$APT_ROOT"
-dpkg-scanpackages --multiversion "$CHANNEL" > "${CHANNEL}/Packages"
-gzip -k -f "${CHANNEL}/Packages"
+# flat repository 구조이므로 채널 디렉토리 자체에서 스캔해야 Filename이
+# 순수 파일명(현재 디렉토리 기준 상대경로)으로 기록된다.
+# (APT_ROOT에서 스캔하면 Filename에 "nightly/파일명"처럼 채널명이 중복 포함되어
+#  "deb URL ./" 형식의 flat repo에서 실제 다운로드 경로가 어긋나는 버그가 있었음)
+cd "$CHANNEL_DIR"
+dpkg-scanpackages --multiversion . > "Packages"
+gzip -k -f "Packages"
 
 echo "==> 5. Release 파일 생성"
-cat > "${CHANNEL}/Release" <<EOF
+# 이 시점의 작업 디렉토리는 $CHANNEL_DIR 이므로 모든 파일명은 상대경로(파일명만)로 참조한다.
+cat > "Release" <<EOF
 Origin: Word Book
 Label: Word Book
 Suite: ${CHANNEL}
@@ -71,14 +82,14 @@ EOF
 # Packages/Packages.gz의 체크섬을 Release 파일에 추가
 {
   echo "MD5Sum:"
-  for f in "${CHANNEL}/Packages" "${CHANNEL}/Packages.gz"; do
+  for f in "Packages" "Packages.gz"; do
     printf ' %s %16d %s\n' "$(md5sum "$f" | cut -d' ' -f1)" "$(stat -c%s "$f")" "$(basename "$f")"
   done
   echo "SHA256:"
-  for f in "${CHANNEL}/Packages" "${CHANNEL}/Packages.gz"; do
+  for f in "Packages" "Packages.gz"; do
     printf ' %s %16d %s\n' "$(sha256sum "$f" | cut -d' ' -f1)" "$(stat -c%s "$f")" "$(basename "$f")"
   done
-} >> "${CHANNEL}/Release"
+} >> "Release"
 
 echo "==> 6. Release 파일 GPG 서명 (InRelease + Release.gpg)"
 # GPG_PASSPHRASE가 설정되지 않았거나 빈 값이면 passphrase 없는 키(%no-protection)로 간주하고
@@ -87,10 +98,10 @@ echo "==> 6. Release 파일 GPG 서명 (InRelease + Release.gpg)"
 GPG_PASSPHRASE="${GPG_PASSPHRASE:-}"
 gpg --batch --yes --pinentry-mode loopback --passphrase "${GPG_PASSPHRASE}" \
   --default-key "${GPG_KEY_ID:?}" \
-  --clearsign -o "${CHANNEL}/InRelease" "${CHANNEL}/Release"
+  --clearsign -o "InRelease" "Release"
 gpg --batch --yes --pinentry-mode loopback --passphrase "${GPG_PASSPHRASE}" \
   --default-key "${GPG_KEY_ID:?}" \
-  --detach-sign -o "${CHANNEL}/Release.gpg" "${CHANNEL}/Release"
+  --detach-sign -o "Release.gpg" "Release"
 
 echo "==> 7. 공개키를 repo 루트에 게시 (사용자가 apt-key/trusted.gpg.d에 추가할 수 있도록)"
 gpg --batch --armor --export "${GPG_KEY_ID}" > "${APT_ROOT}/wordbook-apt-key.asc"
@@ -109,6 +120,6 @@ fi
 
 echo ""
 echo "완료: ${CHANNEL} 채널이 repo 브랜치에 게시되었습니다."
-echo "사용자 설치 안내:"
+echo "사용자 설치 안내 (flat repository 형식, 끝의 './' 필수):"
 echo "  curl -fsSL https://<owner>.github.io/<repo>/apt/wordbook-apt-key.asc | sudo gpg --dearmor -o /usr/share/keyrings/wordbook.gpg"
-echo "  echo 'deb [signed-by=/usr/share/keyrings/wordbook.gpg] https://<owner>.github.io/<repo>/apt/${CHANNEL} ${CHANNEL} main' | sudo tee /etc/apt/sources.list.d/wordbook.list"
+echo "  echo 'deb [signed-by=/usr/share/keyrings/wordbook.gpg] https://<owner>.github.io/<repo>/apt/${CHANNEL} ./' | sudo tee /etc/apt/sources.list.d/wordbook.list"

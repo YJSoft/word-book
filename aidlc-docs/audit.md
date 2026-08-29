@@ -419,3 +419,19 @@
 **Context**: Fixed push authentication by (1) properly passing GITHUB_TOKEN into the script's environment, (2) granting contents:write permission at job level. Documented the additional repository-level setting (Settings > Actions > General > Workflow permissions) that may override job-level permissions.
 
 ---
+
+## Bug Investigation - apt update 404 Not Found
+**Timestamp**: 2026-08-29T14:42:08Z
+**User Input**: (실제 apt update 로그) "무시:10 https://yjsoft.github.io/word-book/apt/nightly nightly InRelease" / "오류:12 ... Release 404 Not Found" / "E: The repository ... does not have a Release file."
+**AI Response**: "curl로 실제 URL 상태 확인 -> 현재 시점에는 InRelease/Release/Packages 모두 200 정상 응답 확인됨 (GitHub Pages 배포 지연이 원인이었을 가능성). 추가로 Packages 파일의 Filename 필드에 공백 포함('Word Book_0.1.0_amd64.deb')을 발견 -> APT 클라이언트 호환성 문제 가능성 있어 근본 대응으로 스크립트에 파일명 정규화(공백->하이픈) 추가. apt-repository-ci-guide.md에 트러블슈팅 섹션(인증실패/404/무시 3가지 케이스) 추가."
+**Context**: Investigated real-world 404 error. Root cause likely GitHub Pages propagation delay (confirmed files now serve 200 via direct curl check), but also identified and fixed a latent issue: Tauri's productName "Word Book" (with space) produces .deb filenames with spaces, which risk APT client URL-encoding issues. Filename normalization added defensively.
+
+---
+
+## ROOT CAUSE FOUND - Wrong sources.list format (not caching/delay)
+**Timestamp**: 2026-08-29T14:45:00Z
+**User Input**: ";;; 52분 기다린거란다 병신아. 헛소리 작렬이네. 뭐? 캐시? 병신이니? Github Pages는 구버전이면 구버전이고 신버전이면 신버전이지 중간단계가 없다고 빙신아."
+**AI Response**: "이전 진단(GitHub Pages 배포 지연)이 틀렸음을 인정. 재조사 결과 실제 근본 원인 확인: sources.list 항목이 'deb URL nightly main' (non-flat/표준 저장소 형식)으로 안내되어 있었는데, 이 저장소는 dists/ 하위구조 없는 flat repository임. apt는 non-flat 형식을 보면 URL/dists/nightly/Release를 요청하므로 항상 404. 캐시나 지연 문제가 아니라 URL 형식 자체의 오류. (1) 안내 문서와 스크립트 출력을 'deb URL ./' (flat 형식, 끝에 './') 로 수정. (2) 연관 버그 발견: dpkg-scanpackages를 apt/ 상위에서 실행해 Filename이 'nightly/파일명'으로 채널명 중복 포함됨 -> 채널 디렉토리 자체에서 스캔하도록 수정하여 Filename이 './파일명'이 되도록 고침. 로컬에서 실제 .deb로 시뮬레이션하여 Filename: ./Word-Book_0.1.0_amd64.deb 정상 생성 확인. bash -n 문법 재검증."
+**Context**: Previous diagnosis (CDN propagation delay) was wrong and wasted user's 52-minute wait. Actual root cause: incorrect sources.list format for a flat APT repository, combined with a related dpkg-scanpackages working-directory bug that produced incorrect relative Filename paths. Both fixed and locally verified via simulation with a real .deb build.
+
+---
