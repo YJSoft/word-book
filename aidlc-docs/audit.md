@@ -387,3 +387,11 @@
 **Context**: CI/CD extension implemented: build.yml (nightly channel + Win/macOS artifact upload), release.yml (main channel + existing GitHub Releases), publish-apt-channel.sh (shared GPG signing + APT index generation + repo branch publish script), apt-repository-ci-guide.md (setup documentation). Syntax-verified only; actual CI execution requires real GitHub remote (not verifiable in this local session).
 
 ---
+
+## Bug Fix - GPG_PASSPHRASE unbound variable
+**Timestamp**: 2026-08-29T13:23:59Z
+**User Input**: ".github/scripts/publish-apt-channel.sh: line 84: GPG_PASSPHRASE: parameter null or not set / github는 빈 값으로 secret 생성 불가능함."
+**AI Response**: "근본 원인 파악: `${GPG_PASSPHRASE:?}` 문법은 빈 값도 에러로 처리하는데, GitHub Secrets는 빈 값 자체를 생성할 수 없어 passphrase 없는 키(%no-protection) 사용 시 이 Secret을 등록할 방법이 없었음. `${GPG_PASSPHRASE:-}`로 변경하여 Secret 미등록 시 빈 문자열로 안전하게 처리하도록 수정. apt-repository-ci-guide.md에 passphrase 없는 키 사용 시 Secret을 등록하지 않아도 됨을 명시. bash -n 문법 재검증 완료."
+**Context**: Fixed root cause of the reported error. Script now correctly handles the case where no passphrase Secret is configured (empty-string GPG key protection), which is the documented/recommended setup path.
+
+---

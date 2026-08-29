@@ -81,10 +81,14 @@ EOF
 } >> "${CHANNEL}/Release"
 
 echo "==> 6. Release 파일 GPG 서명 (InRelease + Release.gpg)"
-gpg --batch --yes --pinentry-mode loopback --passphrase "${GPG_PASSPHRASE:?}" \
+# GPG_PASSPHRASE가 설정되지 않았거나 빈 값이면 passphrase 없는 키(%no-protection)로 간주하고
+# --passphrase '' 로 서명한다. GitHub Secrets는 빈 값으로 생성할 수 없으므로,
+# passphrase가 필요 없는 키를 쓰는 경우 이 Secret 자체를 등록하지 않아도 되도록 처리.
+GPG_PASSPHRASE="${GPG_PASSPHRASE:-}"
+gpg --batch --yes --pinentry-mode loopback --passphrase "${GPG_PASSPHRASE}" \
   --default-key "${GPG_KEY_ID:?}" \
   --clearsign -o "${CHANNEL}/InRelease" "${CHANNEL}/Release"
-gpg --batch --yes --pinentry-mode loopback --passphrase "${GPG_PASSPHRASE:?}" \
+gpg --batch --yes --pinentry-mode loopback --passphrase "${GPG_PASSPHRASE}" \
   --default-key "${GPG_KEY_ID:?}" \
   --detach-sign -o "${CHANNEL}/Release.gpg" "${CHANNEL}/Release"
 

@@ -39,7 +39,9 @@ gpg --armor --export-secret-keys <KEY_ID> > private.asc
 
 GitHub 저장소 Settings → Secrets and variables → Actions에 등록:
 - `APT_GPG_PRIVATE_KEY`: `private.asc` 내용 전체
-- `APT_GPG_PASSPHRASE`: 키 생성 시 사용한 암호 (위 예시처럼 `%no-protection`이면 빈 문자열)
+- `APT_GPG_PASSPHRASE`: 키 생성 시 사용한 암호
+
+> **passphrase 없는 키(`%no-protection`)를 사용하는 경우**: GitHub Secrets는 빈 값으로 생성할 수 없으므로, `APT_GPG_PASSPHRASE` Secret 자체를 등록하지 않으면 됩니다. `publish-apt-channel.sh`는 이 Secret이 없으면 자동으로 빈 passphrase로 서명을 시도합니다 (`${GPG_PASSPHRASE:-}` 기본값 처리).
 
 > **보안 주의**: `private.asc` 파일은 등록 후 로컬에서 안전하게 삭제하세요. 이 키는 저장소의 모든 CI 실행에서 사용 가능하므로, 저장소 접근 권한 관리에 유의해야 합니다.
 
