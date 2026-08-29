@@ -1,0 +1,14 @@
+Origin: Word Book
+Label: Word Book
+Suite: nightly
+Codename: nightly
+Architectures: arm64 amd64
+Components: main
+Description: Word Book APT repository (nightly channel)
+Date: Sat, 29 Aug 2026 14:54:59 +0000
+MD5Sum:
+ 422158d1fc56ea860340880a454bc0fd              399 Packages
+ b46caad18c578aa02846c048a22f5c21              327 Packages.gz
+SHA256:
+ 286b08a2ffe9981bf48fab2500fffa76ddc77fb6064fada240d6535009abaa67              399 Packages
+ d22ef782f995d07d2bf68d78d0d3fe1c745be6aa1c20b319ee7d9ccff653c28f              327 Packages.gz

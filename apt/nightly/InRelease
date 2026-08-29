@@ -1,0 +1,33 @@
+-----BEGIN PGP SIGNED MESSAGE-----
+Hash: SHA512
+
+Origin: Word Book
+Label: Word Book
+Suite: nightly
+Codename: nightly
+Architectures: arm64 amd64
+Components: main
+Description: Word Book APT repository (nightly channel)
+Date: Sat, 29 Aug 2026 14:54:59 +0000
+MD5Sum:
+ 422158d1fc56ea860340880a454bc0fd              399 Packages
+ b46caad18c578aa02846c048a22f5c21              327 Packages.gz
+SHA256:
+ 286b08a2ffe9981bf48fab2500fffa76ddc77fb6064fada240d6535009abaa67              399 Packages
+ d22ef782f995d07d2bf68d78d0d3fe1c745be6aa1c20b319ee7d9ccff653c28f              327 Packages.gz
+-----BEGIN PGP SIGNATURE-----
+
+iQIzBAEBCgAdFiEEdtKhLSrLgjY8n1DtV32s8xToUP8FAmqS8sMACgkQV32s8xTo
+UP/4rQ//TWxSry1eDxGMLzfpUoOl20Ziwjj5ccxbBZ2VYigB2u2YFBGeXO7rZqSY
+O681WIdyarSI4KX+BfZttYE5nGz6onJzGi6+FAd8+xu+CKMNyeKPTAZrpmm64GYb
+rwvmiLu6EzdMDpZYRH258tPj2x7vQI7ovy0jkSIAJR6GzIxXSjA9ffQ/mse8ZE0G
+Cdta+9kaUr/YyTUyzpquQT/x4g1sjqljL37lN1aqkkNNHtvhlrOQ3t9+BEK6OXSH
+3V3KuLXFKIMtOxU2I7KOvP1UvBp7Hcioc8ahfuUkhM9BHfJHENirAi9NUaUMhk+E
+ukDJ03ofjmLeBufS+DRY03n42X6YrfaUKgwr9WkBz6Ir5/RNJLKEcoO2hoK7JIvu
+538n7vhXCJ4TSw2VbvZbztcVGMDoOFrYzJKxgd63IS5a2mDvK9GOQF39AVR5qUos
+73+5sUpCmd+JV2QJM7NAh0mOjFb2DdVjjatX3XrHc8SWrqwEP8VxlDYV9XTcxU5o
+wZgO8uCJFgkQ+qX+tuyaM1HE+TuUCM16b7+gHP5mRL/t2OhZiS4dLPZmOTnKf3JK
+EIlZ/XDFIjbEeVtJ+OTYCjTWLbR0Pjrbjq3KEAg+aJtW0VPPRLdG/BIKH3tdm+61
+X+v49ckngn6DaEfxWAvHgA85NxG7AJJz35uPFObX3CfOE1C6wgI=
+=VuMd
+-----END PGP SIGNATURE-----
