@@ -6,11 +6,13 @@ on:
     paths:
       - 'tauri-app/**'
       - '.github/workflows/build.yml'
+      - '.github/scripts/publish-apt-channel.sh'
   pull_request:
     branches: [main]
     paths:
       - 'tauri-app/**'
       - '.github/workflows/build.yml'
+      - '.github/scripts/publish-apt-channel.sh'
 
 jobs:
   build:
