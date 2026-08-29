@@ -45,6 +45,11 @@ jobs:
       - name: Install Rust
         uses: dtolnay/rust-toolchain@stable
 
+      - name: Cache Rust dependencies and build artifacts
+        uses: Swatinem/rust-cache@v2
+        with:
+          workspaces: tauri-app/src-tauri
+
       - name: Install Node.js
         uses: actions/setup-node@v4
         with:
@@ -56,13 +61,13 @@ jobs:
         working-directory: tauri-app
         run: npm ci
 
-      - name: Run Rust tests
-        working-directory: tauri-app/src-tauri
-        run: cargo test
-
       - name: Run frontend tests
         working-directory: tauri-app
         run: npm test
+
+      - name: Run Rust tests
+        working-directory: tauri-app/src-tauri
+        run: cargo test
 
       - name: Build Tauri app
         working-directory: tauri-app

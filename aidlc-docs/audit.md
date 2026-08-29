@@ -403,3 +403,11 @@
 **Context**: User shared actual GitHub Actions execution log confirming build.yml runs successfully on real GitHub remote and produces 3 Linux bundles. Added artifact upload for all three (previously only nightly APT channel got the .deb, rpm/AppImage were discarded).
 
 ---
+
+## CI Speed Improvement - Rust/Tauri build caching
+**Timestamp**: 2026-08-29T13:32:05Z
+**User Input**: "rust 테스트나 tauri app 빌드 속도를 빠르게 할 방법이 있을까? ci runner spce 변경 없이."
+**AI Response**: "러너 스펙 변경 없이 가능한 개선책 중 가장 효과적인 Swatinem/rust-cache@v2를 build.yml, release.yml 양쪽에 추가 (~/.cargo, target/ 캐싱 - 첫 실행 후 반복 실행에서 대폭 단축 예상). frontend test를 Rust 컴파일 앞으로 이동(가독성 목적, 실질 속도 영향은 캐싱이 핵심). YAML 문법 검증 완료. sccache 등 추가 옵션도 설명."
+**Context**: Added rust-cache to both workflows. This is the single most impactful change available without runner spec changes - subsequent CI runs will reuse cached dependency compilation, only recompiling changed crates.
+
+---
