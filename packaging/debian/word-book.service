@@ -1,0 +1,18 @@
+[Unit]
+Description=Word Book - 단어 암기 애플리케이션 서버
+After=network.target
+
+[Service]
+Type=simple
+Environment=PORT=4000
+Environment=WORD_BOOK_DB_PATH=/var/lib/word-book/wordbook.db
+Environment=WORD_BOOK_STATIC_DIR=/opt/word-book/frontend
+ExecStart=/usr/bin/node /opt/word-book/backend/src/server.js
+WorkingDirectory=/opt/word-book/backend
+Restart=on-failure
+RestartSec=3
+User=word-book
+Group=word-book
+
+[Install]
+WantedBy=multi-user.target

@@ -1,0 +1,10 @@
+Package: word-book
+Version: 1.0.0
+Section: web
+Priority: optional
+Architecture: all
+Depends: nodejs (>= 22.5.0)
+Maintainer: Word Book Project <noreply@example.com>
+Description: 단어 암기 애플리케이션 (Word Book)
+ 로컬 단일 사용자용 단어 암기 웹 애플리케이션. React SPA 프론트엔드와
+ Express + SQLite 백엔드를 systemd 서비스로 통합 제공한다.

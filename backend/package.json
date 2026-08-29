@@ -1,0 +1,18 @@
+{
+  "name": "word-book-backend",
+  "version": "1.0.0",
+  "description": "Word Book application backend - Express REST API with SQLite persistence",
+  "type": "module",
+  "main": "src/server.js",
+  "scripts": {
+    "start": "node src/server.js",
+    "test": "node --test test/**/*.test.js"
+  },
+  "engines": {
+    "node": ">=22.5.0"
+  },
+  "dependencies": {
+    "express": "4.21.2",
+    "cors": "2.8.5"
+  }
+}

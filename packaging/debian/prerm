@@ -1,0 +1,10 @@
+#!/bin/sh
+set -e
+
+if systemctl is-active --quiet word-book.service; then
+  systemctl stop word-book.service
+fi
+
+systemctl disable word-book.service || true
+
+exit 0

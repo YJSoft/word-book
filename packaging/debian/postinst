@@ -1,0 +1,31 @@
+#!/bin/sh
+set -e
+
+# 전용 시스템 사용자 생성 (이미 있으면 무시)
+if ! id -u word-book >/dev/null 2>&1; then
+  adduser --system --group --no-create-home --home /var/lib/word-book word-book
+fi
+
+# 데이터 디렉토리 생성 및 권한 설정
+mkdir -p /var/lib/word-book
+chown -R word-book:word-book /var/lib/word-book
+chown -R word-book:word-book /opt/word-book
+
+# backend 프로덕션 의존성 설치 (패키지에 node_modules를 포함하지 않는 대신 설치 시점에 설치)
+if [ -f /opt/word-book/backend/package.json ]; then
+  cd /opt/word-book/backend
+  npm install --omit=dev --no-audit --no-fund >/var/log/word-book-install.log 2>&1 || {
+    echo "경고: npm install 실패. /var/log/word-book-install.log 를 확인하세요." >&2
+  }
+fi
+
+systemctl daemon-reload
+systemctl enable word-book.service
+
+echo ""
+echo "Word Book 설치 완료."
+echo "서비스를 시작하려면: sudo systemctl start word-book"
+echo "브라우저에서 http://localhost:4000 으로 접속하세요."
+echo ""
+
+exit 0

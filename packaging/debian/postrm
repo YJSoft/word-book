@@ -1,0 +1,15 @@
+#!/bin/sh
+set -e
+
+systemctl daemon-reload || true
+
+if [ "$1" = "purge" ]; then
+  rm -rf /var/lib/word-book
+  rm -rf /opt/word-book
+  rm -f /var/log/word-book-install.log
+  if id -u word-book >/dev/null 2>&1; then
+    deluser --system word-book || true
+  fi
+fi
+
+exit 0
