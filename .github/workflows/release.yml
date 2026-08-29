@@ -30,7 +30,10 @@ jobs:
             libxdo-dev \
             libssl-dev \
             libayatana-appindicator3-dev \
-            librsvg2-dev
+            librsvg2-dev \
+            xdg-utils \
+            dpkg-dev \
+            gpg
 
       - name: Install Rust
         uses: dtolnay/rust-toolchain@stable
@@ -46,6 +49,7 @@ jobs:
         working-directory: tauri-app
         run: npm ci
 
+      # GitHub Releases에 각 OS 설치파일 업로드 (Windows: .msi/.exe, macOS: .dmg/.app, Linux: .deb/.rpm/.AppImage)
       - name: Build and upload release assets
         uses: tauri-apps/tauri-action@v0
         env:
@@ -56,3 +60,22 @@ jobs:
           releaseName: 'Word Book ${{ github.ref_name }}'
           releaseDraft: true
           prerelease: false
+
+      # Linux만: main APT 채널(안정 버전)에 업로드
+      - name: Import GPG key for package signing
+        if: matrix.os == 'ubuntu-latest'
+        run: |
+          echo "${{ secrets.APT_GPG_PRIVATE_KEY }}" | gpg --batch --import
+          echo "GPG_KEY_ID=$(gpg --list-secret-keys --with-colons | grep '^sec' | cut -d: -f5)" >> "$GITHUB_ENV"
+
+      - name: Publish to main APT channel
+        if: matrix.os == 'ubuntu-latest'
+        env:
+          GPG_KEY_ID: ${{ env.GPG_KEY_ID }}
+          GPG_PASSPHRASE: ${{ secrets.APT_GPG_PASSPHRASE }}
+        run: |
+          bash .github/scripts/publish-apt-channel.sh main
+
+      - name: Cleanup imported GPG key
+        if: always() && matrix.os == 'ubuntu-latest'
+        run: gpg --batch --yes --delete-secret-keys "$GPG_KEY_ID" 2>/dev/null || true

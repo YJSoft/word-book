@@ -37,7 +37,10 @@ jobs:
             libxdo-dev \
             libssl-dev \
             libayatana-appindicator3-dev \
-            librsvg2-dev
+            librsvg2-dev \
+            xdg-utils \
+            dpkg-dev \
+            gpg
 
       - name: Install Rust
         uses: dtolnay/rust-toolchain@stable
@@ -64,3 +67,45 @@ jobs:
       - name: Build Tauri app
         working-directory: tauri-app
         run: npm run tauri build
+
+      # Windows/macOS: PR 리뷰 및 확인용 임시 아티팩트 업로드 (배포 아님, 90일 보관)
+      - name: Upload Windows build artifact
+        if: matrix.os == 'windows-latest'
+        uses: actions/upload-artifact@v4
+        with:
+          name: windows-build-${{ github.sha }}
+          path: |
+            tauri-app/src-tauri/target/release/bundle/msi/*.msi
+            tauri-app/src-tauri/target/release/bundle/nsis/*.exe
+          retention-days: 90
+          if-no-files-found: warn
+
+      - name: Upload macOS build artifact
+        if: matrix.os == 'macos-latest'
+        uses: actions/upload-artifact@v4
+        with:
+          name: macos-build-${{ github.sha }}
+          path: |
+            tauri-app/src-tauri/target/release/bundle/dmg/*.dmg
+            tauri-app/src-tauri/target/release/bundle/macos/*.app
+          retention-days: 90
+          if-no-files-found: warn
+
+      # Linux + main 브랜치 push일 때만: nightly APT 채널에 업로드
+      - name: Import GPG key for package signing
+        if: matrix.os == 'ubuntu-latest' && github.event_name == 'push' && github.ref == 'refs/heads/main'
+        run: |
+          echo "${{ secrets.APT_GPG_PRIVATE_KEY }}" | gpg --batch --import
+          echo "GPG_KEY_ID=$(gpg --list-secret-keys --with-colons | grep '^sec' | cut -d: -f5)" >> "$GITHUB_ENV"
+
+      - name: Publish to nightly APT channel
+        if: matrix.os == 'ubuntu-latest' && github.event_name == 'push' && github.ref == 'refs/heads/main'
+        env:
+          GPG_KEY_ID: ${{ env.GPG_KEY_ID }}
+          GPG_PASSPHRASE: ${{ secrets.APT_GPG_PASSPHRASE }}
+        run: |
+          bash .github/scripts/publish-apt-channel.sh nightly
+
+      - name: Cleanup imported GPG key
+        if: always() && matrix.os == 'ubuntu-latest'
+        run: gpg --batch --yes --delete-secret-keys "$GPG_KEY_ID" 2>/dev/null || true

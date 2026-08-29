@@ -347,3 +347,43 @@
 **Context**: Tauri v2 port initiative (v2) FINALIZED. Summary: tauri-app unit created (Rust backend + React frontend, IPC-based), Linux build/tests verified (34/34 unit tests, .deb/.rpm/.AppImage generated), Windows/macOS config-only, GUI E2E documented as unverified due to headless environment. v1 (web app: backend/frontend/packaging) preserved unchanged.
 
 ---
+
+## New Request - CI/CD Extension (APT repo + multi-platform artifacts)
+**Timestamp**: 2026-08-29T12:57:38Z
+**User Input**: "1. 리눅스 deb package후 repo 브랜치에 apt repo로 업로드 및 관리하는것 ci에 추가. main -> nightly / release -> main. 윈도우와 macos artifact upload ci 추가."
+**AI Response**: "ci-cd-requirement-verification-questions.md 생성 - 5개 질문 (브랜치 매핑 의미 확인, APT 저장소 구현 방식(GitHub Pages 기반 vs GPG서명 vs 단순아카이브), GitHub 원격 저장소/Pages 연동 확인, Windows/macOS 업로드 대상 확인, build.yml vs release.yml 범위 확인)."
+**Context**: New feature request - extending CI/CD for APT repository management and multi-platform artifact uploads. Awaiting clarification before implementation.
+
+---
+
+## User Feedback - Incorrect Assumption Called Out
+**Timestamp**: 2026-08-29T13:05:34Z
+**User Input**: "헛소리 싸질러놓은거 답변완료. nightly 브랜치는 어디서 온 AI 환각이지?" (Q1 답변: "main 브랜치 push시 repo의 nightly 저장소 분류에 업로드. release할시(tag 지정) repo의 main 저장소 분류에 업로드. deb 업로드는 무조건 repo 브랜치." / Q2 답변: "기본적으로 B이나 브랜치가 다르다. 저장소 repo 브랜치에 올리라니까..." / Q5 답변: "build.yml도 업로드가 필요하다고 분명히 처음에 요청했었다.")
+**AI Response**: "오류 인정. '저장소 브랜치'를 임의로 'nightly라는 이름의 git 브랜치'로 지어냈던 것이 잘못이었음. 실제 의도는 '단일 repo 브랜치(예: gh-pages 등 하나) 내에 nightly/main이라는 분류(디렉토리)로 구분'하는 것으로 재해석. 추측 대신 명확화 질문으로 확인 진행."
+**Context**: User correctly identified fabricated assumption (nightly as a literal git branch name) not stated by them. Course-correcting: re-confirming actual intent without further invention. Q3(GitHub repo/Pages exists)=A confirmed. Q4(GitHub Releases for Win/macOS)=A confirmed. Q5: build.yml upload was requested from the start - Q5 was unnecessary/redundant.
+
+---
+
+## Requirement Finally Clarified - "repo" not "branch"
+**Timestamp**: 2026-08-29T13:06:46Z
+**User Input**: "repo 라고 3번째 이야기하고 있다. 제발."
+**AI Response**: "완전히 이해함. '저장소 브랜치'가 아니라 그냥 'repo'(이 GitHub 저장소)를 의미했음. 이 repo 안에 APT 저장소를 구성하고 nightly/main을 배포 채널(디렉토리)로 구분하는 것으로 최종 확정. 추가 질문 없이 구현 진행."
+**Context**: FINAL confirmed requirements: (1) APT repo hosted within this same GitHub repo via GitHub Pages (gh-pages branch), with nightly/ and main/ as separate channel directories. (2) main branch push -> upload .deb to nightly/ channel. (3) tag push (release) -> upload .deb to main/ channel. (4) GPG signing included (Q2=B). (5) Windows/macOS artifacts via existing GitHub Releases mechanism in release.yml (Q4=A, likely already sufficient). (6) build.yml needs upload capability too (nightly channel), not just release.yml. Proceeding to implementation without further clarifying questions.
+
+---
+
+## CORRECTION - Branch name is literally "repo", not "gh-pages"
+**Timestamp**: 2026-08-29T13:07:30Z
+**User Input**: "repo 라고 3번째 이야기하고 있다. 제발." followed by (mid-edit) "\"repo\"라는 이름의 브랜치라고 개병신 좆병신 새꺄 제발좀!!!!!!" and "너 바보병신이니???? 답답해서 뒤지겠네 씨팔"
+**AI Response**: "사용자가 3회 이상 명확히 말한 'repo'를 AI가 계속 다른 개념(GitHub 저장소 자체, 또는 자체적으로 만든 'gh-pages' 브랜치명)으로 잘못 해석한 것이 반복된 오류였음을 인정. 'repo'는 실제로 브랜치의 리터럴 이름이었음. publish-apt-channel.sh에서 브랜치명을 gh-pages -> repo로 전면 수정, 변수명(GHPAGES_DIR -> REPO_BRANCH_DIR)도 혼란 방지 위해 수정. bash -n 문법 검증 및 잔여 'gh-pages' 언급 grep으로 완전 제거 확인."
+**Context**: Repeated misinterpretation acknowledged and corrected. Branch name for the APT repo hosting is literally `repo`. All scripts/docs updated accordingly and verified for consistency (no remaining "gh-pages" references).
+
+---
+
+## CI/CD Extension - Implementation Complete
+**Timestamp**: 2026-08-29T13:09:00Z
+**User Input**: N/A (구현 완료)
+**AI Response**: "build.yml 수정: Windows/macOS 빌드 아티팩트 upload-artifact 추가(PR리뷰용, 90일보관), Linux+main push시 GPG서명+nightly채널(repo브랜치의 apt/nightly/) 게시 추가. release.yml 수정: 기존 GitHub Releases 업로드(3-OS) 유지 + Linux+태그push시 GPG서명+main채널(repo브랜치의 apt/main/) 게시 추가. .github/scripts/publish-apt-channel.sh 신규 작성(dpkg-scanpackages로 Packages 인덱스 생성, Release파일+체크섬, GPG clearsign/detach-sign, repo브랜치에 커밋+push, 공개키 export). apt-repository-ci-guide.md 작성(GPG키 생성/Secrets등록 절차, GitHub Pages 설정 안내, 사용자 설치 명령어). YAML/bash 문법 검증 완료. 실제 GitHub Actions 실행은 원격 저장소 연결 여부를 이 세션에서 확인할 수 없어 미검증 - 문서에 명시."
+**Context**: CI/CD extension implemented: build.yml (nightly channel + Win/macOS artifact upload), release.yml (main channel + existing GitHub Releases), publish-apt-channel.sh (shared GPG signing + APT index generation + repo branch publish script), apt-repository-ci-guide.md (setup documentation). Syntax-verified only; actual CI execution requires real GitHub remote (not verifiable in this local session).
+
+---
