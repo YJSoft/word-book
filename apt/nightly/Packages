@@ -1,0 +1,15 @@
+Package: word-book
+Version: 0.1.0
+Architecture: amd64
+Maintainer: you
+Installed-Size: 16661
+Depends: libwebkit2gtk-4.1-0, libgtk-3-0
+Filename: nightly/Word Book_0.1.0_amd64.deb
+Size: 5166000
+MD5sum: 2dd4f08c72a8626d7ad2f36426144e49
+SHA1: a9996cff0a17ab1db6ffea1357406c6aa76a64b9
+SHA256: 77f5de4bd7cc3b81acf8825d88942685e9746bfbb6a8e91fc6e9be89b75eced0
+Priority: optional
+Description: A Tauri App
+ (none)
+
