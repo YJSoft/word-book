@@ -395,3 +395,11 @@
 **Context**: Fixed root cause of the reported error. Script now correctly handles the case where no passphrase Secret is configured (empty-string GPG key protection), which is the documented/recommended setup path.
 
 ---
+
+## Feature Add - Linux artifact upload in build.yml
+**Timestamp**: 2026-08-29T13:28:23Z
+**User Input**: "linux에도 artifact 업로드 추가. appimage/rpm도 만들어지는데 버리면 아깝다." (실제 CI 실행 로그 공유: .deb/.rpm/.AppImage 3개 번들 생성 확인됨)
+**AI Response**: "build.yml에 'Upload Linux build artifact' 스텝 추가 (ubuntu-latest 매트릭스에서 .deb/.rpm/.AppImage 3개 파일 모두 90일 보관 아티팩트로 업로드). YAML 문법 재검증 완료."
+**Context**: User shared actual GitHub Actions execution log confirming build.yml runs successfully on real GitHub remote and produces 3 Linux bundles. Added artifact upload for all three (previously only nightly APT channel got the .deb, rpm/AppImage were discarded).
+
+---

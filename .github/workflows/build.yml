@@ -68,7 +68,7 @@ jobs:
         working-directory: tauri-app
         run: npm run tauri build
 
-      # Windows/macOS: PR 리뷰 및 확인용 임시 아티팩트 업로드 (배포 아님, 90일 보관)
+      # Windows/macOS/Linux: PR 리뷰 및 확인용 임시 아티팩트 업로드 (배포 아님, 90일 보관)
       - name: Upload Windows build artifact
         if: matrix.os == 'windows-latest'
         uses: actions/upload-artifact@v4
@@ -88,6 +88,18 @@ jobs:
           path: |
             tauri-app/src-tauri/target/release/bundle/dmg/*.dmg
             tauri-app/src-tauri/target/release/bundle/macos/*.app
+          retention-days: 90
+          if-no-files-found: warn
+
+      - name: Upload Linux build artifact
+        if: matrix.os == 'ubuntu-latest'
+        uses: actions/upload-artifact@v4
+        with:
+          name: linux-build-${{ github.sha }}
+          path: |
+            tauri-app/src-tauri/target/release/bundle/deb/*.deb
+            tauri-app/src-tauri/target/release/bundle/rpm/*.rpm
+            tauri-app/src-tauri/target/release/bundle/appimage/*.AppImage
           retention-days: 90
           if-no-files-found: warn
 
