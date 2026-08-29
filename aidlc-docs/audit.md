@@ -411,3 +411,11 @@
 **Context**: Added rust-cache to both workflows. This is the single most impactful change available without runner spec changes - subsequent CI runs will reuse cached dependency compilation, only recompiling changed crates.
 
 ---
+
+## Bug Fix - git push authentication failure
+**Timestamp**: 2026-08-29T13:42:11Z
+**User Input**: (실제 CI 로그 공유) "remote: Invalid username or token. Password authentication is not supported for Git operations. fatal: Authentication failed for 'https://github.com/YJSoft/word-book.git/'"
+**AI Response**: "근본 원인 파악: 'Publish to nightly/main APT channel' 스텝의 env 블록에 GITHUB_TOKEN이 전달되지 않아 스크립트 내 클론 URL이 빈 토큰으로 구성됨. build.yml, release.yml 양쪽 Publish 스텝에 GITHUB_TOKEN, GITHUB_REPOSITORY 환경변수 추가. 또한 GITHUB_TOKEN이 기본적으로 쓰기 권한이 없을 수 있어 job 레벨에 permissions: contents: write 추가. apt-repository-ci-guide.md에 저장소 Settings의 Workflow permissions 설정 확인 안내 추가. YAML 문법 재검증 완료."
+**Context**: Fixed push authentication by (1) properly passing GITHUB_TOKEN into the script's environment, (2) granting contents:write permission at job level. Documented the additional repository-level setting (Settings > Actions > General > Workflow permissions) that may override job-level permissions.
+
+---

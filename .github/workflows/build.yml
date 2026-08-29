@@ -14,6 +14,8 @@ on:
 
 jobs:
   build:
+    permissions:
+      contents: write
     strategy:
       fail-fast: false
       matrix:
@@ -120,6 +122,8 @@ jobs:
         env:
           GPG_KEY_ID: ${{ env.GPG_KEY_ID }}
           GPG_PASSPHRASE: ${{ secrets.APT_GPG_PASSPHRASE }}
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          GITHUB_REPOSITORY: ${{ github.repository }}
         run: |
           bash .github/scripts/publish-apt-channel.sh nightly
 

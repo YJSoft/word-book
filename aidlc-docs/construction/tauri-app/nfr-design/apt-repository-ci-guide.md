@@ -49,6 +49,16 @@ GitHub 저장소 Settings → Secrets and variables → Actions에 등록:
 - 워크플로우가 최초 실행되면 `repo` 브랜치가 없을 경우 자동으로 생성합니다 (`git checkout --orphan repo`)
 - GitHub 저장소 Settings → Pages에서 **Source: Deploy from a branch → `repo` 브랜치**로 설정하면 `https://<owner>.github.io/<repo-name>/apt/...` 형태로 접근 가능합니다
 
+### 3. 워크플로우의 `repo` 브랜치 push 권한
+`publish-apt-channel.sh`는 기본 제공되는 `secrets.GITHUB_TOKEN`을 사용해 `repo` 브랜치에 커밋/push합니다. 이 토큰이 push 권한을 가지려면 워크플로우 job에 다음이 필요합니다 (이미 `build.yml`/`release.yml`에 반영됨):
+```yaml
+jobs:
+  build: # 또는 release
+    permissions:
+      contents: write
+```
+이 설정이 없으면(또는 저장소 Settings → Actions → General에서 "Workflow permissions"가 "Read repository contents"로 제한되어 있으면) `git push` 시 `Authentication failed` 또는 `Permission denied` 오류가 발생합니다. 저장소 Settings → Actions → General → Workflow permissions에서 "Read and write permissions"가 선택되어 있는지도 확인하세요 (organization/repository 정책에 따라 이 설정이 우선 적용될 수 있음).
+
 ## 사용자 설치 방법 (안내용, 실제 URL은 저장소명에 맞게 치환)
 
 ```bash
